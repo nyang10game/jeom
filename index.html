@@ -526,6 +526,7 @@ body::before{content:'';position:fixed;inset:0;background-image:url("data:image/
 <!-- FOOTER -->
 <div class="app-footer">
   <div class="disclaimer">점(JEOM)은 엔터테인먼트 목적의 참고 서비스입니다<br>실제 인생 결정에 맹목적으로 의존하지 마세요 · For entertainment only</div>
+  <div style="margin-top:12px"><button onclick="localStorage.removeItem('gemini_key');alert('API 키가 초기화되었습니다.')" style="background:none;border:none;color:var(--text3);font-family:inherit;font-size:10px;letter-spacing:0.2em;cursor:pointer;text-decoration:underline">API 키 초기화</button></div>
 </div>
 
 </div><!-- /app -->
@@ -534,11 +535,22 @@ body::before{content:'';position:fixed;inset:0;background-image:url("data:image/
 // ─────────────────────────────────────────
 // GEMINI API
 // ─────────────────────────────────────────
-const GEMINI_KEY = 'AIzaSyCXM8-ZPRIXIWj8sn4ow3hvhDWosekVBZY';
-const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_KEY}`;
+function getGeminiKey(){
+  let k = localStorage.getItem('gemini_key');
+  if(!k){
+    k = prompt('Gemini API 키를 입력하세요.\n(Google AI Studio에서 무료 발급 가능)\nhttps://aistudio.google.com/app/apikey');
+    if(k) localStorage.setItem('gemini_key', k.trim());
+  }
+  return k ? k.trim() : null;
+}
+function getGeminiURL(){
+  const k = getGeminiKey();
+  if(!k) throw new Error('API 키 없음');
+  return `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${k}`;
+}
 
 async function callGemini(prompt, maxTokens=2000){
-  const res = await fetch(GEMINI_URL, {
+  const res = await fetch(getGeminiURL(), {
     method:'POST',
     headers:{'Content-Type':'application/json'},
     body: JSON.stringify({
