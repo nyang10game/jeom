@@ -1,0 +1,915 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#05050a">
+<title>점 · JEOM</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@300;400;600&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#05050a;--surface:#0e0e18;--surface2:#16162a;--surface3:#1e1e32;
+  --border:#2a2840;--border2:#3d3a5c;
+  --gold:#c9a96e;--gold2:#e8c98a;--gold-dim:#6b5530;
+  --text:#ede8df;--text2:#9490a8;--text3:#3e3a52;
+  --accent:#7c6af5;--accent2:#a99cf8;
+  --wood:#4a9068;--fire:#c0513a;--earth:#c9a96e;--metal:#a0a8c0;--water:#4060a0;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 20px);
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{scroll-behavior:smooth}
+html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:'Noto Serif KR',serif;-webkit-font-smoothing:antialiased}
+
+/* Noise texture overlay */
+body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");pointer-events:none;z-index:9999;opacity:0.3}
+
+/* Stars canvas */
+#stars{position:fixed;inset:0;pointer-events:none;z-index:0}
+
+/* Gradient orb */
+.bg-orb{position:fixed;width:60vw;height:60vw;max-width:400px;max-height:400px;border-radius:50%;background:radial-gradient(circle,rgba(124,106,245,0.07) 0%,transparent 70%);pointer-events:none;z-index:0;top:10%;left:50%;transform:translateX(-50%)}
+
+.app{position:relative;z-index:1;min-height:100vh;padding-bottom:calc(40px + var(--safe-bottom))}
+
+/* ── HEADER ── */
+.header{text-align:center;padding:calc(var(--safe-top) + 40px) 20px 0;position:relative}
+.logo{font-family:'Cormorant Garamond',serif;font-size:52px;font-weight:300;letter-spacing:0.4em;color:var(--gold);display:block;margin-bottom:8px;text-shadow:0 0 60px rgba(201,169,110,0.3)}
+.header-sub{font-size:10px;letter-spacing:0.5em;color:var(--text2);text-transform:uppercase}
+
+/* ── SCREENS ── */
+.screen{display:none}
+.screen.active{display:block;animation:fadeUp 0.45s cubic-bezier(0.4,0,0.2,1)}
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── LANDING ── */
+#s-landing{padding:44px 24px 60px;max-width:560px;margin:0 auto}
+.landing-eyebrow{font-size:10px;letter-spacing:0.45em;color:var(--text2);text-transform:uppercase;text-align:center;margin-bottom:16px}
+.landing-title{font-family:'Cormorant Garamond',serif;font-size:32px;font-weight:300;text-align:center;line-height:1.45;margin-bottom:8px}
+.landing-title em{font-style:italic;color:var(--gold)}
+.landing-desc{font-size:12px;color:var(--text2);letter-spacing:0.08em;line-height:1.9;text-align:center;margin-bottom:48px}
+
+.menu-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:0 auto}
+.menu-item{background:var(--surface);border:1px solid var(--border);padding:28px 22px;cursor:pointer;transition:all 0.3s cubic-bezier(0.4,0,0.2,1);position:relative;overflow:hidden;text-align:left;border-radius:2px;-webkit-user-select:none;user-select:none}
+.menu-item::after{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(124,106,245,0.04) 0%,transparent 60%);opacity:0;transition:opacity 0.3s}
+.menu-item:hover,.menu-item:active{background:var(--surface2);border-color:var(--border2);transform:translateY(-1px)}
+.menu-item:hover::after,.menu-item:active::after{opacity:1}
+.menu-item.coming{cursor:default;opacity:0.4}
+.menu-item.coming:hover,.menu-item.coming:active{background:var(--surface);border-color:var(--border);transform:none}
+.menu-item.coming::after{display:none}
+.menu-icon{font-size:26px;margin-bottom:14px;display:block;filter:drop-shadow(0 0 8px rgba(201,169,110,0.2))}
+.menu-name{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:300;color:var(--text);display:block;margin-bottom:6px;letter-spacing:0.05em}
+.menu-desc{font-size:11px;color:var(--text2);letter-spacing:0.04em;line-height:1.75;display:block}
+.menu-badge{display:inline-block;font-size:9px;letter-spacing:0.22em;color:var(--gold);border:1px solid var(--gold-dim);padding:3px 10px;margin-top:12px;text-transform:uppercase;border-radius:1px}
+.menu-badge.soon{color:var(--text3);border-color:var(--text3)}
+.menu-wide{grid-column:1/-1;display:flex;gap:18px;align-items:center}
+.menu-wide .menu-desc{margin-top:2px}
+.menu-wide .menu-badge{margin-left:auto;margin-top:0;flex-shrink:0}
+
+/* ── BACK / STEPS ── */
+.back-btn{background:none;border:none;color:var(--text2);font-family:'Noto Serif KR',serif;font-size:13px;cursor:pointer;letter-spacing:0.1em;padding:0;margin-bottom:36px;display:inline-flex;align-items:center;gap:8px;transition:color 0.2s;touch-action:manipulation}
+.back-btn:hover,.back-btn:active{color:var(--text)}
+.steps{display:flex;align-items:center;justify-content:center;gap:0;padding:28px 20px 0}
+.step{display:flex;flex-direction:column;align-items:center;gap:7px}
+.step-dot{width:7px;height:7px;border-radius:50%;background:var(--border2);transition:all 0.4s}
+.step.active .step-dot{background:var(--gold);box-shadow:0 0 14px rgba(201,169,110,0.6)}
+.step.done .step-dot{background:var(--gold-dim)}
+.step-label{font-size:9px;letter-spacing:0.22em;color:var(--text3);text-transform:uppercase}
+.step.active .step-label{color:var(--gold)}
+.step-line{width:44px;height:1px;background:var(--border2);margin-bottom:14px}
+
+/* ── FORMS ── */
+.form-wrap{max-width:560px;margin:0 auto;padding:40px 24px 60px}
+.screen-title{font-family:'Cormorant Garamond',serif;font-size:30px;font-weight:300;line-height:1.4;margin-bottom:8px;text-align:center;letter-spacing:0.02em}
+.screen-title em{font-style:italic;color:var(--gold)}
+.screen-desc{font-size:12px;color:var(--text2);letter-spacing:0.06em;line-height:1.85;text-align:center;margin-bottom:40px}
+.form-group{margin-bottom:28px}
+.form-label{display:block;font-size:9px;letter-spacing:0.4em;color:var(--gold);text-transform:uppercase;margin-bottom:14px}
+.pill-row{display:flex;gap:8px;flex-wrap:wrap}
+.pill{padding:11px 20px;background:transparent;border:1px solid var(--border2);color:var(--text2);font-family:'Noto Serif KR',serif;font-size:13px;cursor:pointer;border-radius:2px;transition:all 0.2s;letter-spacing:0.03em;touch-action:manipulation;min-height:44px}
+.pill:hover,.pill:active{border-color:var(--gold-dim);color:var(--text)}
+.pill.selected{background:var(--gold);border-color:var(--gold);color:var(--bg);font-weight:600}
+.date-row{display:flex;gap:8px}
+.date-select{flex:1;padding:14px 14px;background:var(--surface);border:1px solid var(--border);color:var(--text);font-family:'Noto Serif KR',serif;font-size:14px;outline:none;transition:border-color 0.2s;cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='7' viewBox='0 0 11 7'%3E%3Cpath d='M1 1l4.5 4.5L10 1' stroke='%239490a8' stroke-width='1.3' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:30px;border-radius:2px;min-height:48px}
+.date-select:focus{border-color:var(--gold-dim)}
+.date-select option{background:var(--surface)}
+.lunar-toggle{display:flex;gap:0;margin-bottom:14px}
+.toggle-btn{flex:1;padding:12px;background:transparent;border:1px solid var(--border2);color:var(--text2);font-family:'Noto Serif KR',serif;font-size:12px;cursor:pointer;letter-spacing:0.1em;transition:all 0.2s;min-height:44px}
+.toggle-btn:first-child{border-right:none}
+.toggle-btn.active{background:var(--surface2);border-color:var(--gold-dim);color:var(--gold)}
+.time-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.time-btn{padding:10px 4px;background:transparent;border:1px solid var(--border);color:var(--text2);font-family:'Noto Serif KR',serif;font-size:11px;cursor:pointer;border-radius:2px;transition:all 0.2s;text-align:center;line-height:1.4;min-height:52px;touch-action:manipulation}
+.time-btn:hover,.time-btn:active{border-color:var(--gold-dim);color:var(--text)}
+.time-btn.selected{background:var(--gold);border-color:var(--gold);color:var(--bg);font-weight:600}
+.time-btn .tj{font-size:13px;display:block}
+.time-btn .tr{font-size:9px;opacity:0.65;display:block;margin-top:2px}
+.form-textarea{width:100%;background:var(--surface);border:1px solid var(--border);color:var(--text);font-family:'Noto Serif KR',serif;font-size:14px;line-height:1.9;padding:18px 20px;resize:none;outline:none;transition:border-color 0.2s;letter-spacing:0.02em;min-height:120px;border-radius:2px}
+.form-textarea:focus{border-color:var(--gold-dim)}
+.form-textarea::placeholder{color:var(--text3)}
+.btn-primary{width:100%;padding:20px;background:transparent;border:1px solid var(--gold);color:var(--gold);font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:300;letter-spacing:0.3em;cursor:pointer;transition:all 0.3s;position:relative;overflow:hidden;margin-top:12px;border-radius:2px;min-height:60px;touch-action:manipulation}
+.btn-primary::before{content:'';position:absolute;inset:0;background:var(--gold);transform:scaleX(0);transform-origin:left;transition:transform 0.3s cubic-bezier(0.4,0,0.2,1);z-index:0}
+.btn-primary:hover::before,.btn-primary:active::before{transform:scaleX(1)}
+.btn-primary:hover,.btn-primary:active{color:var(--bg)}
+.btn-primary span{position:relative;z-index:1}
+.error-msg{background:rgba(192,81,58,0.1);border:1px solid rgba(192,81,58,0.3);color:#e07060;padding:14px 18px;font-size:13px;line-height:1.6;margin-top:14px;display:none;border-radius:2px}
+.error-msg.visible{display:block}
+
+/* ── TAROT CARDS ── */
+#s-tarot-cards{padding:36px 20px 60px}
+.spread-title{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:300;text-align:center;margin-bottom:6px;letter-spacing:0.04em}
+.spread-desc{font-size:11px;color:var(--text2);letter-spacing:0.18em;text-align:center;margin-bottom:12px;text-transform:uppercase}
+.selected-count{font-family:'Cormorant Garamond',serif;font-size:14px;color:var(--gold);text-align:center;margin-bottom:24px;letter-spacing:0.22em;min-height:22px}
+.card-grid{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;max-width:800px;margin:0 auto 40px}
+.tarot-card{width:68px;height:115px;perspective:900px;cursor:pointer;flex-shrink:0;touch-action:manipulation}
+.card-inner{width:100%;height:100%;position:relative;transform-style:preserve-3d;transition:transform 0.7s cubic-bezier(0.4,0,0.2,1)}
+.tarot-card.flipped .card-inner{transform:rotateY(180deg)}
+.card-face,.card-back{position:absolute;inset:0;backface-visibility:hidden;border-radius:3px;border:1px solid var(--border)}
+.card-back{background:var(--surface);display:flex;align-items:center;justify-content:center;transition:all 0.3s;overflow:hidden}
+.card-back-pattern{position:absolute;inset:0;background:repeating-linear-gradient(45deg,transparent,transparent 4px,rgba(124,106,245,0.06) 4px,rgba(124,106,245,0.06) 5px)}
+.card-back-border{position:absolute;inset:5px;border:1px solid rgba(124,106,245,0.2);border-radius:2px}
+.card-back-symbol{font-size:20px;position:relative;z-index:1;opacity:0.35;transition:opacity 0.3s}
+.tarot-card:hover .card-back-symbol,.tarot-card:active .card-back-symbol{opacity:0.75}
+.tarot-card:hover .card-back,.tarot-card:active .card-back{border-color:rgba(124,106,245,0.5);box-shadow:0 0 18px rgba(124,106,245,0.25);transform:translateY(-3px)}
+.tarot-card.flipped .card-back{transform:none}
+.card-face{background:var(--surface);transform:rotateY(180deg);display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:0;border-color:var(--gold2);box-shadow:0 0 18px rgba(201,169,110,0.2);overflow:hidden}
+.card-art{width:100%;flex:1;object-fit:cover;display:block}
+.card-name{font-family:'Cormorant Garamond',serif;font-size:7.5px;letter-spacing:0.1em;color:var(--gold);text-align:center;text-transform:uppercase;padding:4px;background:rgba(5,5,10,0.9);width:100%;flex-shrink:0}
+.tarot-card.flipped .card-back{box-shadow:0 0 0 2px var(--gold),0 0 28px rgba(201,169,110,0.35)}
+.proceed-area{text-align:center;opacity:0;transform:translateY(10px);transition:all 0.5s;pointer-events:none;padding-bottom:20px}
+.proceed-area.visible{opacity:1;transform:translateY(0);pointer-events:all}
+.btn-proceed{padding:18px 52px;background:transparent;border:1px solid var(--gold);color:var(--gold);font-family:'Cormorant Garamond',serif;font-size:17px;font-weight:300;letter-spacing:0.28em;cursor:pointer;transition:all 0.3s;position:relative;overflow:hidden;border-radius:2px;min-height:60px;touch-action:manipulation}
+.btn-proceed::before{content:'';position:absolute;inset:0;background:var(--gold);transform:scaleX(0);transform-origin:left;transition:transform 0.3s;z-index:0}
+.btn-proceed:hover::before,.btn-proceed:active::before{transform:scaleX(1)}
+.btn-proceed:hover,.btn-proceed:active{color:var(--bg)}
+.btn-proceed span{position:relative;z-index:1}
+
+/* ── MANSE ── */
+#s-manse{max-width:600px;margin:0 auto;padding:40px 24px 60px}
+.manse-header{text-align:center;margin-bottom:36px}
+.manse-name-display{font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:300;margin-top:10px;letter-spacing:0.05em}
+.lunar-info{font-size:11px;color:var(--text2);letter-spacing:0.1em;margin-top:6px}
+.saju-table{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);border:1px solid var(--border);margin-bottom:24px;border-radius:2px;overflow:hidden}
+.pillar{background:var(--surface);display:flex;flex-direction:column;align-items:center}
+.pillar-label{font-size:9px;letter-spacing:0.32em;color:var(--gold);text-transform:uppercase;padding:10px 6px 8px;border-bottom:1px solid var(--border);width:100%;text-align:center}
+.pillar-chars{display:flex;flex-direction:column;align-items:center;padding:16px 8px;gap:4px;width:100%}
+.pillar-cg{font-family:'Cormorant Garamond',serif;font-size:36px;font-weight:300;line-height:1}
+.pillar-jj{font-family:'Cormorant Garamond',serif;font-size:36px;font-weight:300;line-height:1;color:var(--text2)}
+.pillar-ko{font-size:10px;color:var(--text2);letter-spacing:0.1em;margin-top:4px}
+.pillar-animal{font-size:9px;color:var(--text3);letter-spacing:0.05em}
+.ohaeng-section{margin-bottom:24px}
+.ohaeng-title{font-size:9px;letter-spacing:0.42em;color:var(--gold);text-transform:uppercase;margin-bottom:14px;display:block}
+.ohaeng-bars{display:flex;flex-direction:column;gap:10px}
+.ohaeng-row{display:flex;align-items:center;gap:12px}
+.ohaeng-label{font-family:'Cormorant Garamond',serif;font-size:16px;width:20px;text-align:center;flex-shrink:0}
+.ohaeng-bar-wrap{flex:1;height:5px;background:var(--surface2);border-radius:3px;overflow:hidden}
+.ohaeng-bar{height:100%;border-radius:3px;transition:width 1.2s cubic-bezier(0.4,0,0.2,1)}
+.ohaeng-count{font-size:11px;color:var(--text2);width:20px;text-align:right;flex-shrink:0}
+.ilgan-card{background:var(--surface);border:1px solid var(--border);padding:22px 26px;position:relative;border-radius:2px}
+.ilgan-card::before{content:'';position:absolute;top:0;left:0;width:2px;height:100%;background:linear-gradient(to bottom,var(--gold),var(--gold-dim));opacity:0.6}
+.ilgan-label{font-size:9px;letter-spacing:0.42em;color:var(--gold);text-transform:uppercase;margin-bottom:12px;display:block}
+.ilgan-body{font-size:14px;line-height:2;color:#b2acba;letter-spacing:0.03em}
+.manse-proceed{text-align:center;margin-top:28px}
+
+/* ── READING (shared) ── */
+.reading-wrap{max-width:640px;margin:0 auto;padding:40px 24px 60px}
+.reading-header{text-align:center;margin-bottom:36px}
+.reading-title{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:300;margin-top:10px;letter-spacing:0.04em}
+.mini-saju{display:flex;justify-content:center;gap:8px;margin-bottom:32px}
+.mini-pillar{width:52px;background:var(--surface);border:1px solid var(--border);padding:10px 6px;text-align:center;border-radius:2px}
+.mini-pillar-label{font-size:9px;color:var(--gold);letter-spacing:0.2em;display:block;margin-bottom:6px}
+.mini-cg{font-family:'Cormorant Garamond',serif;font-size:22px;display:block}
+.mini-jj{font-family:'Cormorant Garamond',serif;font-size:22px;color:var(--text2);display:block}
+.selected-row{display:flex;justify-content:center;gap:12px;margin-bottom:32px}
+.mini-card{width:52px;height:86px;background:var(--surface);border:1px solid var(--gold);border-radius:3px;display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:0;box-shadow:0 0 10px rgba(201,169,110,0.12);overflow:hidden}
+.mini-card-img{width:100%;flex:1;object-fit:cover}
+.mini-card-name{font-family:'Cormorant Garamond',serif;font-size:7px;letter-spacing:0.05em;color:var(--gold);text-align:center;padding:3px 2px;background:rgba(5,5,10,0.9);width:100%;line-height:1.2}
+.reading-loading{text-align:center;padding:50px 20px}
+.reading-orb{width:48px;height:48px;border:1px solid var(--border2);border-top-color:var(--gold);border-radius:50%;margin:0 auto 24px;animation:spin 1.5s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.reading-loading-text{font-size:11px;color:var(--text2);letter-spacing:0.28em;animation:pulse 2.2s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:0.35}50%{opacity:1}}
+.reading-loading-sub{font-size:10px;color:var(--text3);letter-spacing:0.1em;margin-top:10px}
+.result-section{background:var(--surface);border:1px solid var(--border);padding:24px 28px;margin-bottom:10px;position:relative;animation:slideUp 0.5s ease both;border-radius:2px}
+.result-section:nth-child(2){animation-delay:.06s}
+.result-section:nth-child(3){animation-delay:.12s}
+.result-section:nth-child(4){animation-delay:.18s}
+.result-section:nth-child(5){animation-delay:.24s}
+@keyframes slideUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+.result-section::before{content:'';position:absolute;top:0;left:0;width:2px;height:100%;background:linear-gradient(to bottom,var(--gold),var(--gold-dim));opacity:0.55}
+.result-label{font-size:9px;letter-spacing:0.42em;color:var(--gold);text-transform:uppercase;margin-bottom:12px;display:block}
+.result-body{font-size:14px;line-height:2;color:#b2acba;letter-spacing:0.03em;white-space:pre-wrap}
+.reading-result{display:none}
+.reading-result.visible{display:block}
+
+/* ── SHARE SECTION ── */
+.share-section{margin-top:32px;padding:24px;background:var(--surface);border:1px solid var(--border);border-radius:2px;text-align:center}
+.share-label{font-size:9px;letter-spacing:0.42em;color:var(--gold);text-transform:uppercase;margin-bottom:18px;display:block}
+.share-btns{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.share-btn{display:flex;align-items:center;gap:8px;padding:12px 20px;background:transparent;border:1px solid var(--border2);color:var(--text2);font-family:'Noto Serif KR',serif;font-size:13px;cursor:pointer;border-radius:2px;transition:all 0.2s;touch-action:manipulation;min-height:44px}
+.share-btn:hover,.share-btn:active{border-color:var(--gold-dim);color:var(--text)}
+.share-btn.kakao{border-color:#f9e000;color:#f9e000}
+.share-btn.kakao:hover,.share-btn.kakao:active{background:rgba(249,224,0,0.08)}
+.share-btn.native{border-color:var(--accent2);color:var(--accent2)}
+.share-btn.native:hover,.share-btn.native:active{background:rgba(124,106,245,0.08)}
+.share-copy-toast{font-size:11px;color:var(--gold);margin-top:12px;opacity:0;transition:opacity 0.3s;letter-spacing:0.1em}
+.share-copy-toast.visible{opacity:1}
+
+/* ── RESET ── */
+.btn-reset{display:block;margin:32px auto 0;background:none;border:1px solid var(--border2);color:var(--text2);font-family:'Noto Serif KR',serif;font-size:13px;letter-spacing:0.18em;padding:14px 40px;cursor:pointer;transition:all 0.2s;border-radius:2px;min-height:48px;touch-action:manipulation}
+.btn-reset:hover,.btn-reset:active{border-color:var(--gold-dim);color:var(--text)}
+
+/* ── QUOTA ERROR ── */
+.quota-banner{margin-top:20px;padding:28px;background:linear-gradient(135deg,rgba(14,14,24,0.9),rgba(30,30,50,0.9));border:1px solid rgba(124,106,245,0.3);border-radius:4px;text-align:center;display:none}
+.quota-banner.visible{display:block;animation:fadeUp 0.4s ease}
+.quota-icon{font-size:36px;margin-bottom:16px;display:block;filter:drop-shadow(0 0 12px rgba(124,106,245,0.4))}
+.quota-title{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:300;color:var(--gold);margin-bottom:10px;letter-spacing:0.04em}
+.quota-msg{font-size:13px;color:var(--text2);line-height:1.9;letter-spacing:0.03em;margin-bottom:20px}
+.quota-sub{font-size:11px;color:var(--text3);letter-spacing:0.08em;line-height:1.8}
+
+/* ── FOOTER ── */
+.app-footer{text-align:center;padding:32px 20px 40px;border-top:1px solid var(--text3);margin-top:0}
+.disclaimer{font-size:10px;color:var(--text3);letter-spacing:0.08em;line-height:2;max-width:440px;margin:0 auto}
+
+/* ── GLASS DIVIDER ── */
+.divider{width:40px;height:1px;background:linear-gradient(to right,transparent,var(--gold-dim),transparent);margin:0 auto 32px}
+
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+
+/* Responsive tweaks */
+@media(max-width:380px){
+  .logo{font-size:44px}
+  .menu-item{padding:24px 18px}
+  .card-grid{gap:8px}
+  .tarot-card{width:62px;height:106px}
+}
+@media(min-width:640px){
+  .time-grid{grid-template-columns:repeat(6,1fr)}
+  #s-landing{padding:52px 32px 60px}
+}
+</style>
+</head>
+<body>
+<canvas id="stars"></canvas>
+<div class="bg-orb"></div>
+<div class="app">
+
+<!-- HEADER -->
+<div class="header">
+  <span class="logo">점</span>
+  <div class="header-sub">JEOM · 당신의 운명을 읽습니다</div>
+</div>
+
+<!-- ── LANDING ── -->
+<div class="screen active" id="s-landing">
+  <div id="s-landing-inner">
+    <div class="landing-eyebrow">Oracle · Destiny · Insight</div>
+    <div class="landing-title">무엇이 <em>궁금하신가요</em></div>
+    <div class="landing-desc">원하는 방식으로 운명을 탐색해보세요</div>
+    <div class="divider"></div>
+    <div class="menu-grid">
+      <div class="menu-item" onclick="goTo('s-tarot-concern')">
+        <span class="menu-icon">🃏</span>
+        <span class="menu-name">타로</span>
+        <span class="menu-desc">카드가 지금 이 순간<br>당신에게 전하는 메시지</span>
+        <span class="menu-badge">Available</span>
+      </div>
+      <div class="menu-item" onclick="goTo('s-saju-input')">
+        <span class="menu-icon">☯</span>
+        <span class="menu-name">사주</span>
+        <span class="menu-desc">생년월일로 보는<br>만세력과 운명의 흐름</span>
+        <span class="menu-badge">Available</span>
+      </div>
+      <div class="menu-item coming">
+        <span class="menu-icon">🌙</span>
+        <span class="menu-name">신점</span>
+        <span class="menu-desc">기운과 영적 흐름으로<br>보는 운세</span>
+        <span class="menu-badge soon">Coming Soon</span>
+      </div>
+      <div class="menu-item coming">
+        <span class="menu-icon">✦</span>
+        <span class="menu-name">수비학</span>
+        <span class="menu-desc">이름과 생년월일 속<br>숫자의 비밀</span>
+        <span class="menu-badge soon">Coming Soon</span>
+      </div>
+      <div class="menu-item coming menu-wide">
+        <span class="menu-icon" style="font-size:22px;flex-shrink:0;margin-bottom:0">🪐</span>
+        <div>
+          <span class="menu-name" style="font-size:19px">점성술</span>
+          <span class="menu-desc" style="display:block;margin-top:4px">행성의 기운으로 보는 운명</span>
+        </div>
+        <span class="menu-badge soon">Coming Soon</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── TAROT: CONCERN ── -->
+<div class="screen" id="s-tarot-concern">
+  <div class="steps">
+    <div class="step active" id="ts1"><div class="step-dot"></div><div class="step-label">고민</div></div>
+    <div class="step-line"></div>
+    <div class="step" id="ts2"><div class="step-dot"></div><div class="step-label">카드</div></div>
+    <div class="step-line"></div>
+    <div class="step" id="ts3"><div class="step-dot"></div><div class="step-label">해석</div></div>
+  </div>
+  <div class="form-wrap">
+    <button class="back-btn" onclick="goTo('s-landing')">← 뒤로</button>
+    <div class="screen-title">지금 <em>마음속</em>에<br>무엇이 있나요</div>
+    <div class="screen-desc">고민을 카드에게 솔직하게 털어놓으세요<br>카드는 판단하지 않습니다</div>
+    <div class="form-group">
+      <label class="form-label">나의 고민 · My Concern</label>
+      <textarea class="form-textarea" id="tarot-concern" rows="5" placeholder="예) 이 관계를 계속해야 할지 모르겠어요. 직장을 바꾸는 게 맞는지 궁금해요..."></textarea>
+    </div>
+    <button class="btn-primary" onclick="goTarotCards()"><span>카드를 펼치다</span></button>
+  </div>
+</div>
+
+<!-- ── TAROT: CARDS ── -->
+<div class="screen" id="s-tarot-cards">
+  <div class="steps">
+    <div class="step done" id="ts1b"><div class="step-dot"></div><div class="step-label">고민</div></div>
+    <div class="step-line"></div>
+    <div class="step active" id="ts2b"><div class="step-dot"></div><div class="step-label">카드</div></div>
+    <div class="step-line"></div>
+    <div class="step" id="ts3b"><div class="step-dot"></div><div class="step-label">해석</div></div>
+  </div>
+  <div style="max-width:800px;margin:0 auto;padding:36px 20px 60px">
+    <button class="back-btn" onclick="goTo('s-tarot-concern')">← 뒤로</button>
+    <div class="spread-title">세 장을 고르세요</div>
+    <div class="spread-desc">과거 · 현재 · 미래</div>
+    <div class="selected-count" id="sel-count"></div>
+    <div class="card-grid" id="card-grid"></div>
+    <div class="proceed-area" id="proceed-area">
+      <button class="btn-proceed" onclick="goTarotReading()"><span>운명을 읽다 →</span></button>
+    </div>
+  </div>
+</div>
+
+<!-- ── TAROT: READING ── -->
+<div class="screen" id="s-tarot-reading">
+  <div class="reading-wrap">
+    <button class="back-btn" onclick="goTo('s-tarot-cards')">← 뒤로</button>
+    <div class="reading-header">
+      <div class="header-sub">Tarot Reading</div>
+      <div class="reading-title">카드의 <em>메시지</em></div>
+    </div>
+    <div class="selected-row" id="selected-row"></div>
+    <div id="tarot-loading">
+      <div class="reading-orb"></div>
+      <div class="reading-loading-text">카드를 해석하는 중</div>
+      <div class="reading-loading-sub">잠시만 기다려 주세요...</div>
+    </div>
+    <div class="quota-banner" id="tarot-quota">
+      <span class="quota-icon">🔮</span>
+      <div class="quota-title">오늘의 해석이 가득 찼어요</div>
+      <div class="quota-msg">너무 많은 분들이 오늘 점을 보셨어요.<br>운명은 서두르지 않습니다.<br>내일 다시 찾아와 주세요 🌙</div>
+      <div class="quota-sub">매일 새벽 자정, 해석이 다시 열립니다<br>Resets every midnight KST</div>
+    </div>
+    <div class="reading-result" id="tarot-result">
+      <div class="result-section">
+        <span class="result-label">흐름 · Past · Present · Future</span>
+        <div class="result-body" id="tr-flow"></div>
+      </div>
+      <div class="result-section">
+        <span class="result-label">핵심 메시지 · Core Message</span>
+        <div class="result-body" id="tr-message"></div>
+      </div>
+      <div class="result-section">
+        <span class="result-label">참고 방향 · Guidance</span>
+        <div class="result-body" id="tr-advice"></div>
+      </div>
+      <div class="share-section">
+        <span class="share-label">결과 공유하기 · Share</span>
+        <div class="share-btns">
+          <button class="share-btn native" onclick="shareNative('tarot')">📱 공유하기</button>
+          <button class="share-btn kakao" onclick="shareKakao('tarot')">💬 카카오톡</button>
+          <button class="share-btn" onclick="copyResult('tarot')">📋 복사</button>
+        </div>
+        <div class="share-copy-toast" id="tarot-toast">클립보드에 복사되었어요 ✓</div>
+      </div>
+      <button class="btn-reset" onclick="goTo('s-landing')">처음으로</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── SAJU: INPUT ── -->
+<div class="screen" id="s-saju-input">
+  <div class="steps">
+    <div class="step active" id="ss1"><div class="step-dot"></div><div class="step-label">정보</div></div>
+    <div class="step-line"></div>
+    <div class="step" id="ss2"><div class="step-dot"></div><div class="step-label">만세력</div></div>
+    <div class="step-line"></div>
+    <div class="step" id="ss3"><div class="step-dot"></div><div class="step-label">해석</div></div>
+  </div>
+  <div class="form-wrap">
+    <button class="back-btn" onclick="goTo('s-landing')">← 뒤로</button>
+    <div class="screen-title">당신의 <em>사주</em>를<br>입력해 주세요</div>
+    <div class="screen-desc">생년월일과 태어난 시간으로<br>운명의 큰 흐름을 읽습니다</div>
+    <div class="form-group">
+      <label class="form-label">성별 · Gender</label>
+      <div class="pill-row" id="gender-pills">
+        <button class="pill" onclick="selectPill(this,'gender')">남성</button>
+        <button class="pill" onclick="selectPill(this,'gender')">여성</button>
+        <button class="pill" onclick="selectPill(this,'gender')">선택 안 함</button>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">양력 / 음력 · Calendar</label>
+      <div class="lunar-toggle">
+        <button class="toggle-btn active" id="toggle-solar" onclick="setCalendar('solar')">양력</button>
+        <button class="toggle-btn" id="toggle-lunar" onclick="setCalendar('lunar')">음력 (근사값)</button>
+      </div>
+      <div class="date-row">
+        <select class="date-select" id="sel-year"></select>
+        <select class="date-select" id="sel-month"></select>
+        <select class="date-select" id="sel-day"></select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">태어난 시 · Birth Hour</label>
+      <div class="time-grid" id="time-grid"></div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">고민 · Concern</label>
+      <textarea class="form-textarea" id="saju-concern" rows="4" placeholder="사주를 통해 알고 싶은 것이 무엇인가요?"></textarea>
+    </div>
+    <div class="error-msg" id="saju-error"></div>
+    <button class="btn-primary" onclick="goManse()"><span>만세력 보기</span></button>
+  </div>
+</div>
+
+<!-- ── SAJU: MANSE ── -->
+<div class="screen" id="s-manse">
+  <div id="s-manse-inner">
+    <div class="steps">
+      <div class="step done" id="ss1b"><div class="step-dot"></div><div class="step-label">정보</div></div>
+      <div class="step-line"></div>
+      <div class="step active" id="ss2b"><div class="step-dot"></div><div class="step-label">만세력</div></div>
+      <div class="step-line"></div>
+      <div class="step" id="ss3b"><div class="step-dot"></div><div class="step-label">해석</div></div>
+    </div>
+    <div id="s-manse-content" style="max-width:600px;margin:0 auto;padding:40px 24px 60px">
+      <button class="back-btn" onclick="goTo('s-saju-input')">← 뒤로</button>
+      <div class="manse-header">
+        <div class="header-sub">四柱命理 · 萬歲曆</div>
+        <div class="manse-name-display" id="manse-title"></div>
+        <div class="lunar-info" id="lunar-info"></div>
+      </div>
+      <div class="saju-table" id="saju-table"></div>
+      <div class="ohaeng-section">
+        <span class="ohaeng-title">오행 분포 · Five Elements</span>
+        <div class="ohaeng-bars" id="ohaeng-bars"></div>
+      </div>
+      <div class="ilgan-card">
+        <span class="ilgan-label">일간 · Day Master</span>
+        <div class="ilgan-body" id="ilgan-text"></div>
+      </div>
+      <div class="manse-proceed">
+        <button class="btn-primary" style="max-width:320px;margin:28px auto 0;display:block" onclick="goSajuReading()"><span>사주 해석 보기 →</span></button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── SAJU: READING ── -->
+<div class="screen" id="s-saju-reading">
+  <div class="reading-wrap">
+    <button class="back-btn" onclick="goTo('s-manse')">← 뒤로</button>
+    <div class="reading-header">
+      <div class="header-sub">四柱 解析 · Saju Reading</div>
+      <div class="reading-title">운명의 <em>흐름</em></div>
+    </div>
+    <div class="mini-saju" id="mini-saju"></div>
+    <div id="saju-loading">
+      <div class="reading-orb"></div>
+      <div class="reading-loading-text">사주를 해석하는 중</div>
+      <div class="reading-loading-sub">오행과 천간지지를 분석합니다...</div>
+    </div>
+    <div class="quota-banner" id="saju-quota">
+      <span class="quota-icon">☯️</span>
+      <div class="quota-title">오늘의 운기가 가득 찼어요</div>
+      <div class="quota-msg">오늘 너무 많은 분의 사주를 봤어요.<br>좋은 운은 서두르지 않습니다.<br>내일 다시 찾아오시면 더욱 명확하게 보일 거예요 🌟</div>
+      <div class="quota-sub">매일 새벽 자정, 해석이 다시 열립니다<br>Resets every midnight KST</div>
+    </div>
+    <div class="reading-result" id="saju-result">
+      <div class="result-section">
+        <span class="result-label">사주 총평 · Overall</span>
+        <div class="result-body" id="sr-overall"></div>
+      </div>
+      <div class="result-section">
+        <span class="result-label">고민 해석 · Your Concern</span>
+        <div class="result-body" id="sr-concern"></div>
+      </div>
+      <div class="result-section">
+        <span class="result-label">올해의 기운 · This Year</span>
+        <div class="result-body" id="sr-year"></div>
+      </div>
+      <div class="result-section">
+        <span class="result-label">참고 방향 · Guidance</span>
+        <div class="result-body" id="sr-advice"></div>
+      </div>
+      <div class="share-section">
+        <span class="share-label">결과 공유하기 · Share</span>
+        <div class="share-btns">
+          <button class="share-btn native" onclick="shareNative('saju')">📱 공유하기</button>
+          <button class="share-btn kakao" onclick="shareKakao('saju')">💬 카카오톡</button>
+          <button class="share-btn" onclick="copyResult('saju')">📋 복사</button>
+        </div>
+        <div class="share-copy-toast" id="saju-toast">클립보드에 복사되었어요 ✓</div>
+      </div>
+      <button class="btn-reset" onclick="goTo('s-landing')">처음으로</button>
+    </div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<div class="app-footer">
+  <div class="disclaimer">점(JEOM)은 엔터테인먼트 목적의 참고 서비스입니다<br>실제 인생 결정에 맹목적으로 의존하지 마세요 · For entertainment only</div>
+</div>
+
+</div><!-- /app -->
+
+<script>
+// ─────────────────────────────────────────
+// GEMINI API
+// ─────────────────────────────────────────
+const GEMINI_KEY = 'AIzaSyDijUWO116rpPgTz6qJZbT1kpXt9FHJ1Kw';
+const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_KEY}`;
+
+async function callGemini(prompt, maxTokens=2000){
+  const res = await fetch(GEMINI_URL, {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({
+      contents:[{parts:[{text:prompt}]}],
+      generationConfig:{temperature:0.85,maxOutputTokens:maxTokens},
+      safetySettings:[
+        {category:'HARM_CATEGORY_HARASSMENT',threshold:'BLOCK_NONE'},
+        {category:'HARM_CATEGORY_HATE_SPEECH',threshold:'BLOCK_NONE'}
+      ]
+    })
+  });
+  const data = await res.json();
+  
+  // Check quota / rate limit errors
+  if(data.error){
+    const code = data.error.code;
+    const status = data.error.status;
+    if(code===429 || status==='RESOURCE_EXHAUSTED' || status==='TOO_MANY_REQUESTS'){
+      throw {quota:true};
+    }
+    throw new Error(data.error.message || 'API 오류');
+  }
+  
+  if(!data.candidates || !data.candidates[0]){
+    throw new Error('응답 없음');
+  }
+  
+  return data.candidates[0].content.parts[0].text;
+}
+
+// ─────────────────────────────────────────
+// CARD IMAGES (Base64 — from original file)
+// ─────────────────────────────────────────
+const CARD_IMAGES=["data:image/jpeg;base64,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","data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAUDBAQEAwUEBAQFBQUGBwwIBwcHBw8LCwkMEQ8SEhEPERETFhwXExQaFRERGCEYGh0dHx8fExciJCIeJBweHx7/wAARCADIAHgDASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwD6SooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooA//2Q=="];
+// Repeat for all 22 major arcana (using placeholder)
+while(CARD_IMAGES.length<22)CARD_IMAGES.push(CARD_IMAGES[CARD_IMAGES.length%2]);
+
+// ── Stars ──
+const canvas=document.getElementById('stars');
+const ctx=canvas.getContext('2d');
+function rsz(){canvas.width=innerWidth;canvas.height=innerHeight}
+rsz();window.addEventListener('resize',rsz);
+const ST=Array.from({length:80},()=>({x:Math.random(),y:Math.random(),r:Math.random()*1.1,o:Math.random()*0.45+0.1,sp:Math.random()*3000+2000,off:Math.random()*6283}));
+function drawStars(t){ctx.clearRect(0,0,canvas.width,canvas.height);ST.forEach(s=>{const op=s.o*(0.5+0.5*Math.sin(t/s.sp+s.off));ctx.beginPath();ctx.arc(s.x*canvas.width,s.y*canvas.height,s.r,0,Math.PI*2);ctx.fillStyle=`rgba(255,255,255,${op})`;ctx.fill()});requestAnimationFrame(drawStars)}
+requestAnimationFrame(drawStars);
+
+// ── Nav ──
+function goTo(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+// ─────────────────────────────────────────
+// SHARE FUNCTIONALITY
+// ─────────────────────────────────────────
+function buildShareText(type){
+  let text = '🔮 점(JEOM)에서 운세를 봤어요!\n\n';
+  if(type==='tarot'){
+    text += '🃏 타로 해석 결과\n\n';
+    const flow = document.getElementById('tr-flow').textContent;
+    const msg = document.getElementById('tr-message').textContent;
+    if(flow) text += `[흐름]\n${flow.substring(0,120)}...\n\n`;
+    if(msg) text += `[핵심 메시지]\n${msg.substring(0,120)}...\n\n`;
+  } else {
+    text += '☯ 사주 해석 결과\n\n';
+    const overall = document.getElementById('sr-overall').textContent;
+    const year = document.getElementById('sr-year').textContent;
+    if(overall) text += `[사주 총평]\n${overall.substring(0,120)}...\n\n`;
+    if(year) text += `[올해의 기운]\n${year.substring(0,100)}...\n\n`;
+  }
+  text += '나도 보러가기 → JEOM.app';
+  return text;
+}
+
+async function shareNative(type){
+  const text = buildShareText(type);
+  if(navigator.share){
+    try{
+      await navigator.share({
+        title:'점 · JEOM 운세 결과',
+        text:text
+      });
+    }catch(e){}
+  } else {
+    copyResult(type);
+  }
+}
+
+function shareKakao(type){
+  const text = encodeURIComponent(buildShareText(type));
+  // Try native KakaoTalk scheme first (mobile), fallback to story share
+  const kakaoURL = `kakaotalk://msg/text?text=${text}`;
+  const webURL = `https://story.kakao.com/s/share?url=${encodeURIComponent(location.href)}&text=${text}`;
+  
+  // On mobile, try KakaoTalk scheme
+  if(/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)){
+    const w = window.open(kakaoURL,'_blank');
+    setTimeout(()=>{
+      // Fallback to web share if native app not opened
+      if(w) w.close();
+      window.open(webURL,'_blank','width=600,height=400');
+    },1200);
+  } else {
+    window.open(`https://story.kakao.com/s/share?url=jeom.app&text=${text}`,'kakao','width=600,height=400');
+  }
+}
+
+function copyResult(type){
+  const text = buildShareText(type);
+  navigator.clipboard.writeText(text).then(()=>{
+    const toast = document.getElementById(`${type}-toast`);
+    toast.classList.add('visible');
+    setTimeout(()=>toast.classList.remove('visible'),2800);
+  }).catch(()=>{
+    // Fallback
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    const toast = document.getElementById(`${type}-toast`);
+    toast.classList.add('visible');
+    setTimeout(()=>toast.classList.remove('visible'),2800);
+  });
+}
+
+// ─────────────────────────────────────────
+// TAROT
+// ─────────────────────────────────────────
+const MAJOR_ARCANA=[
+  {name:'The Fool',ko:'바보',img:CARD_IMAGES[0]},
+  {name:'The Magician',ko:'마법사',img:CARD_IMAGES[1]},
+  {name:'High Priestess',ko:'여사제',img:CARD_IMAGES[0]},
+  {name:'The Empress',ko:'여황제',img:CARD_IMAGES[1]},
+  {name:'The Emperor',ko:'황제',img:CARD_IMAGES[0]},
+  {name:'The Hierophant',ko:'교황',img:CARD_IMAGES[1]},
+  {name:'The Lovers',ko:'연인',img:CARD_IMAGES[0]},
+  {name:'The Chariot',ko:'전차',img:CARD_IMAGES[1]},
+  {name:'Strength',ko:'힘',img:CARD_IMAGES[0]},
+  {name:'The Hermit',ko:'은둔자',img:CARD_IMAGES[1]},
+  {name:'Wheel of Fortune',ko:'운명의 수레',img:CARD_IMAGES[0]},
+  {name:'Justice',ko:'정의',img:CARD_IMAGES[1]},
+  {name:'The Hanged Man',ko:'매달린 자',img:CARD_IMAGES[0]},
+  {name:'Death',ko:'죽음',img:CARD_IMAGES[1]},
+  {name:'Temperance',ko:'절제',img:CARD_IMAGES[0]},
+  {name:'The Devil',ko:'악마',img:CARD_IMAGES[1]},
+  {name:'The Tower',ko:'탑',img:CARD_IMAGES[0]},
+  {name:'The Star',ko:'별',img:CARD_IMAGES[1]},
+  {name:'The Moon',ko:'달',img:CARD_IMAGES[0]},
+  {name:'The Sun',ko:'태양',img:CARD_IMAGES[1]},
+  {name:'Judgement',ko:'심판',img:CARD_IMAGES[0]},
+  {name:'The World',ko:'세계',img:CARD_IMAGES[1]},
+];
+let tarotConcern='',selectedCards=[];
+
+function goTarotCards(){
+  tarotConcern=document.getElementById('tarot-concern').value.trim();
+  if(tarotConcern.length<5){
+    const t=document.getElementById('tarot-concern');
+    t.style.borderColor='#c0513a';
+    t.style.animation='shake 0.3s ease';
+    setTimeout(()=>{t.style.borderColor='';t.style.animation=''},500);
+    return;
+  }
+  goTo('s-tarot-cards');
+  buildCardGrid();
+}
+
+function buildCardGrid(){
+  selectedCards=[];
+  const grid=document.getElementById('card-grid');
+  grid.innerHTML='';
+  updateTarotCount();
+  document.getElementById('proceed-area').classList.remove('visible');
+  [...MAJOR_ARCANA].sort(()=>Math.random()-0.5).forEach((card,i)=>{
+    const el=document.createElement('div');
+    el.className='tarot-card';
+    el.style.animation=`fadeUp 0.4s ease ${i*0.025}s both`;
+    el.innerHTML=`<div class="card-inner"><div class="card-back"><div class="card-back-pattern"></div><div class="card-back-border"></div><div class="card-back-symbol">✦</div></div><div class="card-face"><img class="card-art" src="${card.img}" alt="${card.ko}" loading="lazy"><div class="card-name">${card.ko}</div></div></div>`;
+    el.addEventListener('click',()=>toggleCard(el,card));
+    grid.appendChild(el);
+  });
+}
+
+function toggleCard(el,card){
+  if(el.classList.contains('flipped')){
+    el.classList.remove('flipped');
+    selectedCards=selectedCards.filter(c=>c.name!==card.name);
+  }else{
+    if(selectedCards.length>=3){el.style.animation='shake 0.3s ease';setTimeout(()=>el.style.animation='',300);return;}
+    el.classList.add('flipped');
+    selectedCards.push(card);
+  }
+  updateTarotCount();
+  document.getElementById('proceed-area').classList.toggle('visible',selectedCards.length===3);
+}
+
+function updateTarotCount(){
+  const el=document.getElementById('sel-count');
+  if(!selectedCards.length)el.textContent='';
+  else if(selectedCards.length<3)el.textContent=`${selectedCards.length} / 3 선택됨`;
+  else el.textContent='✦ 세 장이 선택되었습니다';
+}
+
+function goTarotReading(){
+  if(selectedCards.length<3)return;
+  goTo('s-tarot-reading');
+  document.getElementById('selected-row').innerHTML=selectedCards.map(c=>`<div class="mini-card"><img class="mini-card-img" src="${c.img}" alt="${c.ko}"><div class="mini-card-name">${c.ko}</div></div>`).join('');
+  document.getElementById('tarot-loading').style.display='block';
+  document.getElementById('tarot-quota').classList.remove('visible');
+  document.getElementById('tarot-result').classList.remove('visible');
+  fetchTarotReading();
+}
+
+async function fetchTarotReading(){
+  const cardNames=selectedCards.map((c,i)=>`${['과거','현재','미래'][i]}: ${c.name} (${c.ko})`).join('\n');
+  const prompt=`당신은 10년 경력의 타로 마스터입니다.\n중요: 단정적 미래 예언("~됩니다", "~할 것입니다") 금지. 카드의 상징과 에너지를 해석하는 방식으로 작성하세요 ("~한 에너지가 느껴집니다", "~를 암시하는 흐름입니다", "카드는 ~를 가리킵니다").\n\n[내담자 고민]\n${tarotConcern}\n\n[뽑힌 카드 — 과거/현재/미래]\n${cardNames}\n\n아래 3가지를 JSON으로 작성하세요. 한국어로.\n1."flow" — 과거·현재·미래 흐름 해석 (250~320자, 해석형 표현만)\n2."message" — 세 카드를 종합한 핵심 메시지. "당신에게..." 2인칭 (200~260자)\n3."advice" — 카드의 상징에서 나온 참고 방향 2~3가지, 번호 매겨서\n\nJSON만 출력. {"flow":"...","message":"...","advice":"..."}`;
+  
+  try{
+    const text=await callGemini(prompt,1500);
+    const parsed=JSON.parse(text.replace(/```json|```/g,'').trim());
+    document.getElementById('tr-flow').textContent=parsed.flow;
+    document.getElementById('tr-message').textContent=parsed.message;
+    document.getElementById('tr-advice').textContent=parsed.advice;
+    document.getElementById('tarot-loading').style.display='none';
+    document.getElementById('tarot-result').classList.add('visible');
+  }catch(e){
+    document.getElementById('tarot-loading').style.display='none';
+    if(e&&e.quota){
+      document.getElementById('tarot-quota').classList.add('visible');
+    }else{
+      document.getElementById('tarot-loading').innerHTML=`<div style="color:#e07060;font-size:13px;text-align:center;padding:40px 20px">오류가 발생했습니다<br><button onclick="fetchTarotReading()" style="margin-top:14px;background:none;border:1px solid #e07060;color:#e07060;padding:10px 24px;cursor:pointer;font-family:inherit;border-radius:2px">다시 시도</button></div>`;
+      document.getElementById('tarot-loading').style.display='block';
+    }
+  }
+}
+
+// ─────────────────────────────────────────
+// SAJU
+// ─────────────────────────────────────────
+const CG=['甲','乙','丙','丁','戊','己','庚','辛','壬','癸'];
+const CG_KO=['갑','을','병','정','무','기','경','신','임','계'];
+const CG_OH=['木','木','火','火','土','土','金','金','水','水'];
+const JJ=['子','丑','寅','卯','辰','巳','午','未','申','酉','戌','亥'];
+const JJ_KO=['자','축','인','묘','진','사','오','미','신','유','술','해'];
+const JJ_AN=['쥐','소','호랑이','토끼','용','뱀','말','양','원숭이','닭','개','돼지'];
+const JJ_OH=['水','土','木','木','土','火','火','土','金','金','土','水'];
+const JJ_TIME=['23-01','01-03','03-05','05-07','07-09','09-11','11-13','13-15','15-17','17-19','19-21','21-23'];
+const OH_COLOR={'木':'#4a9068','火':'#c0513a','土':'#c9a96e','金':'#a0a8c0','水':'#4060a0'};
+const OH_LABEL={'木':'목(木)','火':'화(火)','土':'토(土)','金':'금(金)','水':'수(水)'};
+const ILGAN_DESC={'甲':'갑목(甲木) 일간. 크고 곧은 나무처럼 강직하고 진취적입니다. 리더십이 강하고 원칙을 중시하며 추진력이 있습니다.','乙':'을목(乙木) 일간. 부드러운 풀처럼 유연하고 적응력이 뛰어납니다. 섬세한 감수성과 친화력으로 사람들과 잘 어울립니다.','丙':'병화(丙火) 일간. 태양처럼 밝고 열정적입니다. 사교적이고 낙천적이며 주변을 환하게 비추는 에너지가 있습니다.','丁':'정화(丁火) 일간. 촛불처럼 섬세하고 따뜻합니다. 총명하고 예민하며 깊은 통찰력으로 전문가가 되는 경향이 있습니다.','戊':'무토(戊土) 일간. 큰 산처럼 묵직하고 안정적입니다. 신뢰감이 높고 책임감이 강해 중심을 잡는 역할을 자연스럽게 맡습니다.','己':'기토(己土) 일간. 비옥한 대지처럼 포용력이 넓고 현실적입니다. 꼼꼼하고 계획적이며 실용적인 판단력이 뛰어납니다.','庚':'경금(庚金) 일간. 단단한 쇳덩이처럼 의지가 강하고 원칙적입니다. 직선적이고 솔직하며 진심이 담겨 있습니다.','辛':'신금(辛金) 일간. 잘 벼린 칼날처럼 예리하고 완벽주의 성향입니다. 심미안이 뛰어나고 높은 기준으로 자신을 갈고닦습니다.','壬':'임수(壬水) 일간. 넓은 바다처럼 지혜롭고 포용력이 큽니다. 두뇌 회전이 빠르고 다양한 분야에 관심 가지는 자유로운 영혼입니다.','癸':'계수(癸水) 일간. 맑은 샘물처럼 깨끗하고 섬세합니다. 직관력이 뛰어나고 보이지 않는 것을 감지하는 영적인 감각이 있습니다.'};
+
+let sajuGender='',calType='solar',sajuBirthHour=-1,sajuConcern='',sajuData=null;
+
+function selectPill(el,group){
+  document.querySelectorAll(`#${group}-pills .pill`).forEach(p=>p.classList.remove('selected'));
+  el.classList.add('selected');
+  if(group==='gender')sajuGender=el.textContent;
+}
+function setCalendar(t){
+  calType=t;
+  document.getElementById('toggle-solar').classList.toggle('active',t==='solar');
+  document.getElementById('toggle-lunar').classList.toggle('active',t==='lunar');
+}
+function selectTime(el,val){
+  document.querySelectorAll('#time-grid .time-btn').forEach(b=>b.classList.remove('selected'));
+  el.classList.add('selected');
+  sajuBirthHour=val;
+}
+function initSajuForm(){
+  const ySel=document.getElementById('sel-year');
+  ySel.innerHTML='<option value="">년</option>';
+  for(let y=2010;y>=1930;y--)ySel.innerHTML+=`<option value="${y}">${y}년</option>`;
+  const mSel=document.getElementById('sel-month');
+  mSel.innerHTML='<option value="">월</option>';
+  for(let m=1;m<=12;m++)mSel.innerHTML+=`<option value="${m}">${m}월</option>`;
+  const dSel=document.getElementById('sel-day');
+  dSel.innerHTML='<option value="">일</option>';
+  for(let d=1;d<=31;d++)dSel.innerHTML+=`<option value="${d}">${d}일</option>`;
+  const tg=document.getElementById('time-grid');
+  tg.innerHTML='';
+  const unk=document.createElement('button');
+  unk.className='time-btn selected';
+  unk.innerHTML='<span class="tj">모름</span><span class="tr">건너뛰기</span>';
+  unk.onclick=()=>selectTime(unk,-1);
+  tg.appendChild(unk);
+  JJ.forEach((j,i)=>{
+    const btn=document.createElement('button');
+    btn.className='time-btn';
+    btn.innerHTML=`<span class="tj">${j}시</span><span class="tr">${JJ_TIME[i]}</span>`;
+    btn.onclick=()=>selectTime(btn,i);
+    tg.appendChild(btn);
+  });
+  sajuBirthHour=-1;
+}
+function getYP(y){const cg=((y-4)%10+10)%10;const jj=((y-4)%12+12)%12;return{cg,jj};}
+function getMP(y,m){const yc=((y-4)%10+10)%10;const base=[2,4,6,8,0,2,4,6,8,0];const cg=(base[yc]+m-1)%10;const jj=(m+1)%12;return{cg,jj};}
+function getDP(y,m,d){const base=new Date(1900,0,1);const tgt=new Date(y,m-1,d);const diff=Math.floor((tgt-base)/86400000);const cg=((diff%10)+10)%10;const jj=((diff%12)+12)%12;return{cg,jj};}
+function getHP(dcg,hjj){if(hjj===-1)return null;const base=[0,2,4,6,8,0,2,4,6,8];const cg=(base[dcg]+hjj)%10;return{cg,jj:hjj};}
+function calcSaju(y,m,d,h){
+  const yp=getYP(y);const mp=getMP(y,m);const dp=getDP(y,m,d);const hp=getHP(dp.cg,h);
+  const pillars=[{label:'년주',...yp},{label:'월주',...mp},{label:'일주',...dp},hp?{label:'시주',...hp}:null].filter(Boolean);
+  const oh={'木':0,'火':0,'土':0,'金':0,'水':0};
+  pillars.forEach(p=>{oh[CG_OH[p.cg]]++;oh[JJ_OH[p.jj]]++;});
+  return{pillars,oh,ilganCg:dp.cg};
+}
+function goManse(){
+  const y=parseInt(document.getElementById('sel-year').value);
+  const m=parseInt(document.getElementById('sel-month').value);
+  const d=parseInt(document.getElementById('sel-day').value);
+  sajuConcern=document.getElementById('saju-concern').value.trim();
+  const err=document.getElementById('saju-error');
+  if(!sajuGender){showSajuError('성별을 선택해주세요.');return;}
+  if(!y||!m||!d){showSajuError('생년월일을 입력해주세요.');return;}
+  if(!sajuConcern){showSajuError('고민을 입력해주세요.');return;}
+  err.classList.remove('visible');
+  sajuData=calcSaju(y,m,d,sajuBirthHour);
+  renderManse(y,m,d);
+  goTo('s-manse');
+}
+function showSajuError(msg){const e=document.getElementById('saju-error');e.textContent=msg;e.classList.add('visible');}
+function renderManse(y,m,d){
+  document.getElementById('manse-title').textContent=`${y}년 ${m}월 ${d}일 · ${sajuGender}`;
+  const ld=new Date(new Date(y,m-1,d).getTime()-30*86400000);
+  document.getElementById('lunar-info').textContent=`음력 약 ${ld.getFullYear()}년 ${ld.getMonth()+1}월 ${ld.getDate()}일 (근사값)`;
+  document.getElementById('saju-table').innerHTML=sajuData.pillars.map(p=>`<div class="pillar"><div class="pillar-label">${p.label}</div><div class="pillar-chars"><div class="pillar-cg" style="color:${OH_COLOR[CG_OH[p.cg]]}">${CG[p.cg]}</div><div class="pillar-jj" style="color:${OH_COLOR[JJ_OH[p.jj]]}">${JJ[p.jj]}</div><div class="pillar-ko">${CG_KO[p.cg]}${JJ_KO[p.jj]}</div><div class="pillar-animal">${JJ_AN[p.jj]}</div></div></div>`).join('');
+  const total=Object.values(sajuData.oh).reduce((a,b)=>a+b,0);
+  document.getElementById('ohaeng-bars').innerHTML=['木','火','土','金','水'].map(oh=>{
+    const cnt=sajuData.oh[oh];const pct=total>0?(cnt/total*100).toFixed(0):0;
+    return`<div class="ohaeng-row"><div class="ohaeng-label" style="color:${OH_COLOR[oh]}">${oh}</div><div class="ohaeng-bar-wrap"><div class="ohaeng-bar" style="width:${pct}%;background:${OH_COLOR[oh]}"></div></div><div class="ohaeng-count">${cnt}</div></div>`;
+  }).join('');
+  document.getElementById('ilgan-text').textContent=ILGAN_DESC[CG[sajuData.ilganCg]]||'일간 정보를 불러오는 중...';
+}
+function goSajuReading(){
+  goTo('s-saju-reading');
+  document.getElementById('mini-saju').innerHTML=sajuData.pillars.map(p=>`<div class="mini-pillar"><span class="mini-pillar-label">${p.label}</span><span class="mini-cg" style="color:${OH_COLOR[CG_OH[p.cg]]}">${CG[p.cg]}</span><span class="mini-jj" style="color:${OH_COLOR[JJ_OH[p.jj]]}">${JJ[p.jj]}</span></div>`).join('');
+  document.getElementById('saju-loading').style.display='block';
+  document.getElementById('saju-quota').classList.remove('visible');
+  document.getElementById('saju-result').classList.remove('visible');
+  fetchSajuReading();
+}
+
+async function fetchSajuReading(){
+  const pt=sajuData.pillars.map(p=>`${p.label}: ${CG[p.cg]}${JJ[p.jj]} (${CG_KO[p.cg]}${JJ_KO[p.jj]}, ${JJ_AN[p.jj]})`).join('\n');
+  const ot=['木','火','土','金','水'].map(oh=>`${OH_LABEL[oh]}: ${sajuData.oh[oh]}개`).join(', ');
+  const prompt=`당신은 20년 경력의 사주명리학 대가입니다.\n중요: 단정적 예언("~됩니다", "~할 것입니다") 금지. 오행과 천간지지의 기운과 흐름을 해석하는 방식으로 작성하세요 ("~한 기운이 강합니다", "~하는 흐름이 읽힙니다"). 엔터테인먼트 참고용임을 전제로 작성.\n\n성별: ${sajuGender}\n사주: ${pt}\n일간: ${CG[sajuData.ilganCg]}(${CG_KO[sajuData.ilganCg]}) ${CG_OH[sajuData.ilganCg]}\n오행: ${ot}\n고민: ${sajuConcern}\n\n4가지를 JSON으로 한국어로 작성하세요.\n1."overall" 사주 총평 (250~320자, 해석형 표현만)\n2."concern" 고민에 대한 사주 관점 해석 (200~280자)\n3."year" ${new Date().getFullYear()}년 올해 기운 흐름 (200~260자)\n4."advice" 부족한 오행 보완 참고 방향 3가지 (번호, 구체적)\n\nJSON만. {"overall":"...","concern":"...","year":"...","advice":"..."}`;
+  
+  try{
+    const text=await callGemini(prompt,2000);
+    const parsed=JSON.parse(text.replace(/```json|```/g,'').trim());
+    document.getElementById('sr-overall').textContent=parsed.overall;
+    document.getElementById('sr-concern').textContent=parsed.concern;
+    document.getElementById('sr-year').textContent=parsed.year;
+    document.getElementById('sr-advice').textContent=parsed.advice;
+    document.getElementById('saju-loading').style.display='none';
+    document.getElementById('saju-result').classList.add('visible');
+  }catch(e){
+    document.getElementById('saju-loading').style.display='none';
+    if(e&&e.quota){
+      document.getElementById('saju-quota').classList.add('visible');
+    }else{
+      document.getElementById('saju-loading').innerHTML=`<div style="color:#e07060;font-size:13px;text-align:center;padding:40px 20px">오류가 발생했습니다<br><button onclick="fetchSajuReading()" style="margin-top:14px;background:none;border:1px solid #e07060;color:#e07060;padding:10px 24px;cursor:pointer;font-family:inherit;border-radius:2px">다시 시도</button></div>`;
+      document.getElementById('saju-loading').style.display='block';
+    }
+  }
+}
+
+// Init
+initSajuForm();
+</script>
+</body>
+</html>
