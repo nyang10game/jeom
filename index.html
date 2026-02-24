@@ -876,10 +876,10 @@ body::before{content:'';position:fixed;inset:0;background-image:url("data:image/
 
 <script>
 // ─────────────────────────────────────────
-// OPENROUTER API
+// GEMINI API (Direct)
 // ─────────────────────────────────────────
-const OR_API_KEY = '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';
-const OR_MODEL   = 'google/gemini-2.0-flash-exp:free';
+const GEMINI_API_KEY = 'AIzaSyAi8WJmrpvyn7x1StQVL7IrO5Sposl8MNQ';
+const GEMINI_MODEL   = 'gemini-2.0-flash';
 
 // JSON 3단계 파싱
 function extractJSON(raw){
@@ -895,21 +895,15 @@ function extractJSON(raw){
 async function callGemini(systemPrompt, userPrompt, maxTokens=2000){
   let res;
   try {
-    res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+    res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + OR_API_KEY,
-        'HTTP-Referer': 'https://jeom.app',
-        'X-Title': 'JEOM'
+        'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        model: OR_MODEL,
-        max_tokens: maxTokens,
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user',   content: userPrompt }
-        ]
+        system_instruction: { parts: [{ text: systemPrompt }] },
+        contents: [{ role: 'user', parts: [{ text: userPrompt }] }],
+        generationConfig: { maxOutputTokens: maxTokens }
       })
     });
   } catch(err) {
@@ -928,11 +922,11 @@ async function callGemini(systemPrompt, userPrompt, maxTokens=2000){
     throw new Error(msg || 'API 오류');
   }
 
-  if(!data.choices || !data.choices[0]){
+  if(!data.candidates || !data.candidates[0]){
     throw new Error('응답이 없습니다.');
   }
 
-  return data.choices[0].message.content;
+  return data.candidates[0].content.parts[0].text;
 }
 
 
